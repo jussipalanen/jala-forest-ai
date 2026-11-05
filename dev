@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Local development helper for the PostGIS Docker Compose stack.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+SERVICE=postgis
+DB_USER=jalaforest
+DB_NAME=jalaforest
+
+usage() {
+  cat <<'EOF'
+Usage: ./dev <command> [args]
+
+Docker:
+  up           Start PostGIS and wait until it accepts connections
+  down         Stop and remove containers (data volume is kept)
+  restart      Restart PostGIS and wait until it is ready
+  logs [-f]    Show PostGIS logs (pass -f to follow)
+  ps           Show container status
+  psql [args]  Open psql in the PostGIS container
+  reset        Remove containers AND the data volume (asks for confirmation)
+
+Pipeline (runs on the host with uv):
+  run          Import WFS data, compute overlaps and export GeoParquet
+  test         Run the test suite
+EOF
+}
+
+wait_ready() {
+  # The postgis image restarts the server once after initialising, so require
+  # several consecutive successful queries before declaring it ready.
+  local ok=0
+  for _ in $(seq 1 60); do
+    if docker compose exec -T "$SERVICE" psql -U "$DB_USER" -d "$DB_NAME" -tAc "select 1" >/dev/null 2>&1; then
+      ok=$((ok + 1))
+      if [ "$ok" -ge 3 ]; then
+        echo "PostGIS is ready on localhost:${POSTGIS_PORT:-5433}"
+        return 0
+      fi
+    else
+      ok=0
+    fi
+    sleep 1
+  done
+  echo "PostGIS did not become ready in time; see ./dev logs" >&2
+  return 1
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  up)
+    docker compose up -d
+    wait_ready
+    ;;
+  down)
+    docker compose down
+    ;;
+  restart)
+    docker compose restart "$SERVICE"
+    wait_ready
+    ;;
+  logs)
+    docker compose logs "$@" "$SERVICE"
+    ;;
+  ps | status)
+    docker compose ps
+    ;;
+  psql)
+    docker compose exec "$SERVICE" psql -U "$DB_USER" -d "$DB_NAME" "$@"
+    ;;
+  reset)
+    read -r -p "This deletes the local PostGIS data volume. Continue? [y/N] " answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+      docker compose down -v
+    else
+      echo "Cancelled."
+    fi
+    ;;
+  run)
+    uv run jalaforest run "$@"
+    ;;
+  test)
+    uv run pytest "$@"
+    ;;
+  help | -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
