@@ -46,7 +46,7 @@ def crosscheck_overlap(engine: Engine, tolerance_ha: float = 1e-6) -> dict:
     tree = STRtree(natura.geometry.values)
     max_diff = 0.0
     mismatches = []
-    for stand_id, geom in zip(stands.stand_id, stands.geom):
+    for stand_id, geom in zip(stands.stand_id, stands.geom, strict=True):
         idx = tree.query(geom)
         hits = [natura.geometry.values[i] for i in idx
                 if relate_pattern(geom, natura.geometry.values[i], "2********")]

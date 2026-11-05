@@ -37,9 +37,9 @@ class ImportOutcome:
 def content_hash(features: list[dict]) -> str:
     """Order-independent hash of feature ids, properties and geometries."""
     canonical = sorted(
-        (json.dumps({"id": f["id"], "properties": f.get("properties"), "geometry": f.get("geometry")},
+        json.dumps({"id": f["id"], "properties": f.get("properties"), "geometry": f.get("geometry")},
                     sort_keys=True, separators=(",", ":"))
-         for f in features)
+         for f in features
     )
     return hashlib.sha256("\n".join(canonical).encode()).hexdigest()
 
