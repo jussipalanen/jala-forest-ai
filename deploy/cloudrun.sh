@@ -70,8 +70,15 @@ step "Service account ${SA} (reads only this service's secrets)"
 "${G[@]}" iam service-accounts describe "$SA" >/dev/null 2>&1 ||
   "${G[@]}" iam service-accounts create "${SERVICE}-run" --display-name "JalaForest Cloud Run" >/dev/null
 for s in "$SECRET_GEMINI" "$SECRET_HASH"; do
-  "${G[@]}" secrets add-iam-policy-binding "$s" --member "serviceAccount:${SA}" \
-    --role roles/secretmanager.secretAccessor >/dev/null
+  # A just-created service account can take a moment to become visible to IAM.
+  for attempt in 1 2 3 4 5 6; do
+    if "${G[@]}" secrets add-iam-policy-binding "$s" --member "serviceAccount:${SA}" \
+        --role roles/secretmanager.secretAccessor >/dev/null 2>&1; then
+      break
+    fi
+    [ "$attempt" -lt 6 ] || { echo "Could not grant ${SA} access to ${s}" >&2; exit 1; }
+    sleep 10
+  done
 done
 
 step "Build and push ${IMAGE}"
