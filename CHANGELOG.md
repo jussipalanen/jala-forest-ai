@@ -18,6 +18,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Search engines and AI crawlers are blocked with `robots.txt` and an `X-Robots-Tag: noindex, noai` header.
 - Public `/health` check for uptime monitoring (e.g. UptimeRobot).
 - Container smoke test (`./dev smoke`, also in CI); `./dev password` shows the login password.
+- Neon as an optional cloud database for the import and analysis: `./dev run --neon` uses `DATABASE_URL`
+  from `.env` and prints which database it writes to. Plain `postgresql://` URLs are accepted as is.
+- Database tests refuse to run against anything but a local database.
 
 ### Changed
 

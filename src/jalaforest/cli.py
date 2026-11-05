@@ -8,7 +8,7 @@ import sys
 from sqlalchemy import text
 
 from . import checks
-from .config import EXPORT_PATH, STUDY_AREA
+from .config import DATABASE_URL, EXPORT_PATH, STUDY_AREA, describe_database_url
 from .db import compute_overlap, get_engine, init_schema
 from .export import export_geoparquet
 from .importer import import_all
@@ -60,6 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     engine = get_engine()
+    print(f"Tietokanta: {describe_database_url(DATABASE_URL)}", file=sys.stderr)
     match args.command:
         case "init-db":
             init_schema(engine)
