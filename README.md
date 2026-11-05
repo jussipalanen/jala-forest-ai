@@ -21,6 +21,7 @@
 ![pgAdmin](https://img.shields.io/badge/pgAdmin-9.19-336791?logo=postgresql&logoColor=white)
 ![Cloud Run](https://img.shields.io/badge/Cloud%20Run-europe--north1-4285F4?logo=googlecloud&logoColor=white)
 ![Caddy](https://img.shields.io/badge/Caddy-2.11-1F88C0?logo=caddy&logoColor=white)
+![Neon](https://img.shields.io/badge/Neon-Postgres%2018-00E599?logo=postgresql&logoColor=white)
 
 </div>
 
@@ -58,7 +59,7 @@ Vaatimukset: Docker ja Docker Compose (testattu Docker Desktop 29.7.2 / WSL2) se
 | `./dev psql` | psql PostGIS-kontissa |
 | `./dev dbui` | Käynnistää pgAdminin ja avaa sen selaimeen |
 | `./dev reset` | Poistaa kontit **ja** tietokantavolyymin (kysyy vahvistuksen) |
-| `./dev run` | Tuonti → analyysi → GeoParquet-vienti (isäntäkoneella uv:llä) |
+| `./dev run [--neon]` | Tuonti → analyysi → GeoParquet-vienti (paikallinen PostGIS; `--neon` käyttää `.env`:n `DATABASE_URL`ia) |
 | `./dev app` | Käynnistää kartan isäntäkoneella Dockerin sijaan (lukee `.env`:n) |
 | `./dev lint` / `test` / `e2e` | Ruff, yksikkö- ja integraatiotestit, Playwright-selaintestit |
 | `./dev smoke` | Rakentaa imagen ja testaa kirjautumisen, `robots.txt`:n ja `/health`-tarkistuksen |
@@ -91,6 +92,31 @@ SELECT NULL, NULL, n.geom FROM natura_sites n;
 </details>
 
 <details>
+<summary><b>🐘 Pilvitietokanta (Neon)</b></summary>
+
+Tuonnin ja PostGIS-analyysin voi ajaa paikallisen tietokannan sijaan [Neonissa](https://neon.com)
+(projekti `jala-forest-ai`, PostgreSQL 18, PostGIS 3.6.4, AWS London). Kartta ei käytä tietokantaa
+kummassakaan tapauksessa, vaan lukee viedyn GeoParquet-tiedoston.
+
+1. Neonin konsolissa *Connect* → poista *Connection pooling* (suora osoite ilman `-pooler`) ja lisää
+   yhteysosoite `.env`-tiedostoon sellaisenaan:
+   `DATABASE_URL=postgresql://neondb_owner:…@ep-….eu-west-2.aws.neon.tech/neondb?sslmode=require`
+   (`postgresql://` muunnetaan automaattisesti psycopg 3 -muotoon).
+2. `./dev run --neon` ajaa tuonnin, analyysin ja viennin Neoniin; ensimmäinen ajo luo PostGIS-laajennuksen
+   ja taulut. Komento tulostaa, mihin tietokantaan se kirjoittaa. Pelkkä `./dev run` käyttää aina paikallista.
+3. Tarkistus: `uv run --env-file .env jalaforest crosscheck`.
+
+- Testit kieltäytyvät ajamasta muuta kuin paikallista tietokantaa vastaan, koska ne luovat ja poistavat
+  kokonaisen testitietokannan.
+- Neon sammuttaa laskennan 5 minuutin käyttämättömyyden jälkeen; älä pidä sitä hereillä pingaamalla, koska
+  ilmaistason 100 CU-tuntia loppuisi. Tuonti kestää noin 8 s.
+- Varmennettu 5.11.2026: sama tulos kuin paikallisesti (333 kuviota, 81 Natura-alueella, 44,3131 ha), ja
+  Shapely-vertailussa ei poikkeamia. Laskentatulosten erot ovat enintään 1,8e-15 ha (Neonin GEOS 3.12 vs.
+  paikallinen 3.14), eli ne katoavat viennin 4 desimaalin pyöristyksessä.
+
+</details>
+
+<details>
 <summary><b>⚙️ Ympäristömuuttujat ja tekoälyhaun kytkin</b></summary>
 
 Asetukset luetaan `.env`-tiedostosta (git-ignoroitu, malli: [.env.example](.env.example)). Docker
@@ -103,7 +129,7 @@ Compose lukee sen sovelluskonttiin, ja `./dev app` / `./dev e2e` lataavat sen uv
 | `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Edullisin uusille avaimille saatavilla oleva malli (ilmaistaso; maksullinen $0,25 / $1,50 per 1M tokenia). `gemini-2.5-flash-lite` palauttaa uusille avaimille 404. |
 | `GEMINI_FALLBACK_MODEL` | `gemini-3.5-flash-lite` | Seuraavaksi edullisin malli, jota käytetään vain, jos oletusmalli on ruuhkautunut (503) tai pyyntöraja täynnä (429). |
 | `DATA_PATH` | `data/export/stand_natura_overlap.parquet` | Sovelluksen lukema GeoParquet. |
-| `DATABASE_URL` | `postgresql+psycopg://jalaforest:jalaforest@localhost:5433/jalaforest` | Tuonnin ja analyysin tietokanta. |
+| `DATABASE_URL` | `postgresql+psycopg://jalaforest:jalaforest@localhost:5433/jalaforest` | Tuonnin ja analyysin tietokanta; `.env`:ssä Neonin osoite, jota `./dev run --neon` käyttää. |
 
 Ilmaistasolla Google voi käyttää kehotteita tuotteidensa kehittämiseen; hakukenttään ei pidä
 kirjoittaa henkilötietoja.
