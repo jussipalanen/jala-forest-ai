@@ -118,5 +118,7 @@ def summary_text_fi(s: SearchSummary) -> str:
 
 def fmt_num(value: float, decimals: int = 2) -> str:
     """Finnish number format: decimal comma, trailing zeros trimmed."""
-    text = f"{value:,.{decimals}f}".rstrip("0").rstrip(".")
+    text = f"{value:,.{decimals}f}"
+    if "." in text:  # trim decimals only: 400 must not become "4"
+        text = text.rstrip("0").rstrip(".")
     return text.replace(",", " ").replace(".", ",")

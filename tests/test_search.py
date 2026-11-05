@@ -57,3 +57,7 @@ def test_describe_and_number_format():
     )
     assert fmt_num(1234.5) == "1 234,5"
     assert fmt_num(0.01) == "0,01"
+    # Regression: integer zeros were trimmed when decimals=0 (400 -> "4").
+    assert fmt_num(400, 0) == "400"
+    assert fmt_num(30000, 0) == "30\u00a0000"
+    assert fmt_num(2.0) == "2"
