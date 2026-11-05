@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-05
+
+Data inspection: pgAdmin and an in-app data view.
+
 ### Added
 
 - pgAdmin 4 web UI for local development at http://localhost:5050 (localhost only, no login), started by
@@ -88,7 +92,8 @@ Phase 1: data import and PostGIS analysis
 - Tests: synthetic overlap cases, import failure handling and WFS paging.
 - README with verified setup, import and check commands.
 
-[Unreleased]: https://github.com/jussipalanen/jala-forest-ai/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jussipalanen/jala-forest-ai/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/jussipalanen/jala-forest-ai/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jussipalanen/jala-forest-ai/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/jussipalanen/jala-forest-ai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jussipalanen/jala-forest-ai/releases/tag/v0.1.0
