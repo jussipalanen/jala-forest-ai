@@ -26,7 +26,8 @@ Docker:
   reset           Remove containers AND the data volume (asks for confirmation)
 
 Pipeline, app and tests (run on the host with uv):
-  run             Import WFS data, compute overlaps and export GeoParquet
+  run [--neon]    Import WFS data, compute overlaps and export GeoParquet
+                  (local PostGIS; --neon uses DATABASE_URL from .env, e.g. Neon)
   app             Start the map app on the host instead of Docker (loads .env if present)
   lint            Run ruff
   test            Run unit and integration tests (PostGIS must be up)
@@ -156,7 +157,14 @@ case "$cmd" in
     fi
     ;;
   run)
-    uv run jalaforest run "$@"
+    if [ "${1:-}" = "--neon" ]; then
+      shift
+      grep -q '^DATABASE_URL=' .env 2>/dev/null || { echo "Add DATABASE_URL to .env first" >&2; exit 1; }
+      uv run --env-file .env jalaforest run "$@"
+    else
+      # Always the local database, even if DATABASE_URL is exported in the shell.
+      env -u DATABASE_URL uv run jalaforest run "$@"
+    fi
     ;;
   app)
     # shellcheck disable=SC2046
@@ -166,7 +174,7 @@ case "$cmd" in
     uv run ruff check .
     ;;
   test)
-    uv run pytest "$@"
+    env -u DATABASE_URL uv run pytest "$@"
     ;;
   e2e)
     # shellcheck disable=SC2046

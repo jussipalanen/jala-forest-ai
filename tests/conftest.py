@@ -5,8 +5,13 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
 
-from jalaforest.config import DATABASE_URL
+from jalaforest.config import DATABASE_URL, describe_database_url, is_local_database_url
 from jalaforest.db import init_schema
+
+# The database tests create and drop a whole database, so never point them at a cloud one.
+if not is_local_database_url(DATABASE_URL):
+    pytest.exit(f"Refusing to run tests against {describe_database_url(DATABASE_URL)}: "
+                "tests use the local PostGIS only (unset DATABASE_URL).", returncode=2)
 
 TEST_DB = "jalaforest_test"
 

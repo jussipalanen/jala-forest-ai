@@ -71,10 +71,34 @@ SYKE_NATURA_LAYERS = tuple(
 
 PAGE_SIZE = int(os.environ.get("WFS_PAGE_SIZE", "100"))
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
+LOCAL_DATABASE_URL = (
     "postgresql+psycopg://jalaforest:jalaforest@localhost:"
-    f"{os.environ.get('POSTGIS_PORT', '5433')}/jalaforest",
+    f"{os.environ.get('POSTGIS_PORT', '5433')}/jalaforest"
 )
+
+
+def normalize_database_url(url: str) -> str:
+    """Accept plain ``postgres://`` / ``postgresql://`` URLs (as Neon shows them) for psycopg 3."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+def describe_database_url(url: str) -> str:
+    """Host and database for log output, without the password."""
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(url)
+    return f"{parts.hostname}:{parts.port or 5432}/{parts.path.lstrip('/')}"
+
+
+def is_local_database_url(url: str) -> bool:
+    from urllib.parse import urlsplit
+
+    return urlsplit(url).hostname in {"localhost", "127.0.0.1", "::1", "postgis"}
+
+
+DATABASE_URL = normalize_database_url(os.environ.get("DATABASE_URL", LOCAL_DATABASE_URL))
 
 EXPORT_PATH = os.environ.get("EXPORT_PATH", "data/export/stand_natura_overlap.parquet")
