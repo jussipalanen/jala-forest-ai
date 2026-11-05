@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+
+- pgAdmin 4 web UI for local development at http://localhost:5050 (localhost only, no login), started by
+  `./dev up` and preconfigured with the project database; `./dev dbui` opens it.
+
 ## [0.2.0] - 2026-11-05
 
 Phase 2: map and conversational search.

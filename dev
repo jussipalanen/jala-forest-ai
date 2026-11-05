@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local development helper for the Docker Compose stack (PostGIS + map app).
+# Local development helper for the Docker Compose stack (PostGIS + map app + pgAdmin).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -8,19 +8,21 @@ DB_SERVICE=postgis
 DB_USER=jalaforest
 DB_NAME=jalaforest
 APP_URL="http://localhost:${APP_PORT:-8501}"
+PGADMIN_URL="http://localhost:${PGADMIN_PORT:-5050}"
 
 usage() {
   cat <<'EOF'
 Usage: ./dev <command> [args]
 
 Docker:
-  up              Build and start PostGIS and the map app, then wait until both are ready
+  up              Build and start PostGIS, the map app and pgAdmin, then wait until they are ready
   down            Stop and remove containers (data volume is kept)
-  restart [svc]   Rebuild and force-recreate the containers (all, or postgis/app), then wait
+  restart [svc]   Rebuild and force-recreate the containers (all, or postgis/app/pgadmin), then wait
   build           Rebuild the app image
-  logs [svc] [-f] Show logs (all services, or postgis/app; -f follows)
+  logs [svc] [-f] Show logs (all services, or postgis/app/pgadmin; -f follows)
   ps              Show container status
   psql [args]     Open psql in the PostGIS container
+  dbui            Start pgAdmin and open it in the browser (http://localhost:5050)
   reset           Remove containers AND the data volume (asks for confirmation)
 
 Pipeline, app and tests (run on the host with uv):
@@ -77,6 +79,18 @@ remove_stale_containers() {
   fi
 }
 
+wait_pgadmin() {
+  for _ in $(seq 1 90); do
+    if curl -sf "$PGADMIN_URL/misc/ping" >/dev/null 2>&1; then
+      echo "pgAdmin is ready at $PGADMIN_URL"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "pgAdmin did not become ready in time; see ./dev logs pgadmin" >&2
+  return 1
+}
+
 env_file_args() {
   if [ -f .env ]; then echo "--env-file .env"; fi
 }
@@ -91,6 +105,7 @@ case "$cmd" in
     docker compose up -d --build --remove-orphans "$@"
     wait_db
     wait_app
+    wait_pgadmin
     ;;
   down)
     docker compose down
@@ -105,6 +120,7 @@ case "$cmd" in
     docker compose up -d --build --remove-orphans "$@"
     wait_db
     wait_app
+    wait_pgadmin
     ;;
   build)
     docker compose build app
@@ -117,6 +133,14 @@ case "$cmd" in
     ;;
   psql)
     docker compose exec "$DB_SERVICE" psql -U "$DB_USER" -d "$DB_NAME" "$@"
+    ;;
+  dbui)
+    docker compose up -d pgadmin >/dev/null
+    wait_pgadmin
+    if command -v wslview >/dev/null; then wslview "$PGADMIN_URL"
+    elif command -v xdg-open >/dev/null; then xdg-open "$PGADMIN_URL" >/dev/null 2>&1 || true
+    elif command -v open >/dev/null; then open "$PGADMIN_URL"
+    fi
     ;;
   reset)
     read -r -p "This deletes the local PostGIS data volume. Continue? [y/N] " answer
