@@ -13,16 +13,16 @@ Pieni paikkatietodemo, jossa käyttäjä hakee metsäkuvioita suomeksi ja näkee
 
 ### 1. Aineiston tuonti ja PostGIS-analyysi
 
-- [ ] Tarkista WFS-palveluiden tasojen tunnisteet, koordinaatistot ja sivutus. Hae kummastakin lähteestä pieni oikea aineisto samalta alueelta.
-- [ ] Aja PostgreSQL/PostGIS Docker Composella. Tuo aineistot Pythoniin ja tietokantaan GeoPandasilla. Tallenna lähde ja hakuajankohta. Saman aineiston uudelleentuonti tuottaa saman lopputilan.
-- [ ] Laske pinta-alat PostGISissä EPSG:3067-koordinaatistossa. Laske Natura-alueiden yhteinen peitto niin, että päällekkäiset Natura-geometriat kerryttävät pinta-alaa vain kerran.
-- [ ] Tarkista yksi tunnettu leikkaus ja tapaus, jossa alueet ainoastaan koskettavat toisiaan. Vie julkaisukartalle tarvittavat geometriat ja luvut yhteen GeoParquet-tiedostoon.
+- [x] Tarkista WFS-palveluiden tasojen tunnisteet, koordinaatistot ja sivutus. Hae kummastakin lähteestä pieni oikea aineisto samalta alueelta.
+- [x] Aja PostgreSQL/PostGIS Docker Composella. Tuo aineistot Pythoniin ja tietokantaan GeoPandasilla. Tallenna lähde ja hakuajankohta. Saman aineiston uudelleentuonti tuottaa saman lopputilan.
+- [x] Laske pinta-alat PostGISissä EPSG:3067-koordinaatistossa. Laske Natura-alueiden yhteinen peitto niin, että päällekkäiset Natura-geometriat kerryttävät pinta-alaa vain kerran.
+- [x] Tarkista yksi tunnettu leikkaus ja tapaus, jossa alueet ainoastaan koskettavat toisiaan. Vie julkaisukartalle tarvittavat geometriat ja luvut yhteen GeoParquet-tiedostoon.
 
 ### 2. Kartta ja keskusteluhaku
 
-- [ ] Näytä kuviot Streamlitissä Foliumilla. Lisää pinta-alan ja Natura-osuuden suodattimet, tulosmäärä ja kuviokohtainen tietolaatikko.
-- [ ] Lisää Gemini API Pythonin `google-genai`-kirjastolla. Malli palauttaa rakenteisen hakuehdon tai tarkentavan kysymyksen. Validoi hakuehdot Pydanticilla ja säilytä keskeneräinen haku Streamlitin istunnossa.
-- [ ] Näytä tilaviesti haun aikana. Kun haku valmistuu, korosta samat kuviot, joista tekstiyhteenveto muodostetaan. Käytä yhteenvedossa haun tarkkoja lukuja.
+- [x] Näytä kuviot Streamlitissä Foliumilla. Lisää pinta-alan ja Natura-osuuden suodattimet, tulosmäärä ja kuviokohtainen tietolaatikko.
+- [x] Lisää Gemini API Pythonin `google-genai`-kirjastolla. Malli palauttaa rakenteisen hakuehdon tai tarkentavan kysymyksen. Validoi hakuehdot Pydanticilla ja säilytä keskeneräinen haku Streamlitin istunnossa.
+- [x] Näytä tilaviesti haun aikana. Kun haku valmistuu, korosta samat kuviot, joista tekstiyhteenveto muodostetaan. Käytä yhteenvedossa haun tarkkoja lukuja.
 
 ### 3. Julkaisu Cloud Runissa
 

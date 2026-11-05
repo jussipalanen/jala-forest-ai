@@ -16,5 +16,19 @@ services:
       timeout: 5s
       retries: 30
 
+  # Map app. Reads the GeoParquet export (./dev run) from the mounted data directory.
+  app:
+    build: .
+    container_name: jalaforest-app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "8501"
+    ports:
+      - "${APP_PORT:-8501}:8501"
+    volumes:
+      - ./data/export:/app/data/export:ro
+
 volumes:
   postgis-data:

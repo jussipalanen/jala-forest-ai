@@ -1,38 +1,43 @@
 #!/usr/bin/env bash
-# Local development helper for the PostGIS Docker Compose stack.
+# Local development helper for the Docker Compose stack (PostGIS + map app).
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-SERVICE=postgis
+DB_SERVICE=postgis
 DB_USER=jalaforest
 DB_NAME=jalaforest
+APP_URL="http://localhost:${APP_PORT:-8501}"
 
 usage() {
   cat <<'EOF'
 Usage: ./dev <command> [args]
 
 Docker:
-  up           Start PostGIS and wait until it accepts connections
-  down         Stop and remove containers (data volume is kept)
-  restart      Restart PostGIS and wait until it is ready
-  logs [-f]    Show PostGIS logs (pass -f to follow)
-  ps           Show container status
-  psql [args]  Open psql in the PostGIS container
-  reset        Remove containers AND the data volume (asks for confirmation)
+  up              Build and start PostGIS and the map app, then wait until both are ready
+  down            Stop and remove containers (data volume is kept)
+  restart [svc]   Rebuild and force-recreate the containers (all, or postgis/app), then wait
+  build           Rebuild the app image
+  logs [svc] [-f] Show logs (all services, or postgis/app; -f follows)
+  ps              Show container status
+  psql [args]     Open psql in the PostGIS container
+  reset           Remove containers AND the data volume (asks for confirmation)
 
-Pipeline (runs on the host with uv):
-  run          Import WFS data, compute overlaps and export GeoParquet
-  test         Run the test suite
+Pipeline, app and tests (run on the host with uv):
+  run             Import WFS data, compute overlaps and export GeoParquet
+  app             Start the map app on the host instead of Docker (loads .env if present)
+  lint            Run ruff
+  test            Run unit and integration tests (PostGIS must be up)
+  e2e             Run Playwright browser tests (loads .env if present)
 EOF
 }
 
-wait_ready() {
+wait_db() {
   # The postgis image restarts the server once after initialising, so require
   # several consecutive successful queries before declaring it ready.
   local ok=0
   for _ in $(seq 1 60); do
-    if docker compose exec -T "$SERVICE" psql -U "$DB_USER" -d "$DB_NAME" -tAc "select 1" >/dev/null 2>&1; then
+    if docker compose exec -T "$DB_SERVICE" psql -U "$DB_USER" -d "$DB_NAME" -tAc "select 1" >/dev/null 2>&1; then
       ok=$((ok + 1))
       if [ "$ok" -ge 3 ]; then
         echo "PostGIS is ready on localhost:${POSTGIS_PORT:-5433}"
@@ -43,8 +48,37 @@ wait_ready() {
     fi
     sleep 1
   done
-  echo "PostGIS did not become ready in time; see ./dev logs" >&2
+  echo "PostGIS did not become ready in time; see ./dev logs postgis" >&2
   return 1
+}
+
+wait_app() {
+  for _ in $(seq 1 60); do
+    if curl -sf "$APP_URL/_stcore/health" >/dev/null 2>&1; then
+      echo "Map app is ready at $APP_URL"
+      [ -f data/export/stand_natura_overlap.parquet ] ||
+        echo "Note: no GeoParquet export yet; run ./dev run and reload the page." >&2
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Map app did not become ready in time; see ./dev logs app" >&2
+  return 1
+}
+
+remove_stale_containers() {
+  # Leftovers named <id>_jalaforest-* from an interrupted recreate block the fixed names.
+  local stale
+  stale=$(docker ps -aq --filter "name=_jalaforest-" 2>/dev/null || true)
+  if [ -n "$stale" ]; then
+    echo "Removing stale containers from an interrupted recreate"
+    # shellcheck disable=SC2086
+    docker rm -f $stale >/dev/null
+  fi
+}
+
+env_file_args() {
+  if [ -f .env ]; then echo "--env-file .env"; fi
 }
 
 cmd="${1:-help}"
@@ -52,24 +86,37 @@ shift || true
 
 case "$cmd" in
   up)
-    docker compose up -d
-    wait_ready
+    mkdir -p data/export
+    remove_stale_containers
+    docker compose up -d --build --remove-orphans "$@"
+    wait_db
+    wait_app
     ;;
   down)
     docker compose down
     ;;
   restart)
-    docker compose restart "$SERVICE"
-    wait_ready
+    # Force a fresh container: remove the old one first (volumes are kept) instead of
+    # --force-recreate, whose rename step fails with fixed container names after an
+    # interrupted or concurrent recreate ("container name ... is already in use").
+    mkdir -p data/export
+    docker compose rm --stop --force "$@"
+    remove_stale_containers
+    docker compose up -d --build --remove-orphans "$@"
+    wait_db
+    wait_app
+    ;;
+  build)
+    docker compose build app
     ;;
   logs)
-    docker compose logs "$@" "$SERVICE"
+    docker compose logs "$@"
     ;;
   ps | status)
     docker compose ps
     ;;
   psql)
-    docker compose exec "$SERVICE" psql -U "$DB_USER" -d "$DB_NAME" "$@"
+    docker compose exec "$DB_SERVICE" psql -U "$DB_USER" -d "$DB_NAME" "$@"
     ;;
   reset)
     read -r -p "This deletes the local PostGIS data volume. Continue? [y/N] " answer
@@ -82,8 +129,19 @@ case "$cmd" in
   run)
     uv run jalaforest run "$@"
     ;;
+  app)
+    # shellcheck disable=SC2046
+    uv run $(env_file_args) streamlit run app/streamlit_app.py --server.headless true "$@"
+    ;;
+  lint)
+    uv run ruff check .
+    ;;
   test)
     uv run pytest "$@"
+    ;;
+  e2e)
+    # shellcheck disable=SC2046
+    uv run $(env_file_args) pytest -m e2e "$@"
     ;;
   help | -h | --help)
     usage
