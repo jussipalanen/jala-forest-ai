@@ -3,5 +3,9 @@
 .env
 .pytest_cache
 **/__pycache__
-data
 tests
+# Only the exported GeoParquet goes into the image.
+data/*
+!data/export/
+data/export/*
+!data/export/stand_natura_overlap.parquet
