@@ -21,6 +21,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Neon as an optional cloud database for the import and analysis: `./dev run --neon` uses `DATABASE_URL`
   from `.env` and prints which database it writes to. Plain `postgresql://` URLs are accepted as is.
 - Database tests refuse to run against anything but a local database.
+- Weekly data refresh: Cloud Scheduler starts a Cloud Build that imports into Neon, builds the app image
+  with the new export and deploys it, stopping before the deploy if the import fails
+  (`deploy/refresh-setup.sh`, `./dev refresh`).
 
 ### Changed
 
