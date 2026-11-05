@@ -9,7 +9,10 @@ services:
     ports:
       - "${POSTGIS_PORT:-5433}:5432"
     volumes:
-      - postgis-data:/var/lib/postgresql/data
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<major>/docker and expect the
+      # volume at /var/lib/postgresql. A new volume name, because PostgreSQL 17 data cannot be
+      # opened by 18; recreate the data with ./dev run.
+      - postgis18-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jalaforest -d jalaforest"]
       interval: 2s
@@ -58,5 +61,5 @@ services:
         condition: service_healthy
 
 volumes:
-  postgis-data:
+  postgis18-data:
   pgadmin-data:
