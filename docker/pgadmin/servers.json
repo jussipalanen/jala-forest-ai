@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "JalaForest PostGIS",
+      "Group": "Local",
+      "Host": "postgis",
+      "Port": 5432,
+      "MaintenanceDB": "jalaforest",
+      "Username": "jalaforest",
+      "PassFile": "/var/lib/pgadmin/pgpass",
+      "SSLMode": "disable"
+    }
+  }
+}
