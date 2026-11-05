@@ -1,0 +1,20 @@
+services:
+  postgis:
+    image: postgis/postgis:17-3.5
+    container_name: jalaforest-postgis
+    environment:
+      POSTGRES_DB: jalaforest
+      POSTGRES_USER: jalaforest
+      POSTGRES_PASSWORD: jalaforest
+    ports:
+      - "${POSTGIS_PORT:-5433}:5432"
+    volumes:
+      - postgis-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jalaforest -d jalaforest"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgis-data:
