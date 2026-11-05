@@ -37,6 +37,7 @@ Pipeline, app and tests (run on the host with uv):
 Cloud Run:
   deploy [--new-password]  Build, push and deploy to Cloud Run (deploy/cloudrun.sh)
   password        Show the Cloud Run login password
+  refresh         Run the scheduled data refresh now (Neon import -> image -> deploy)
 EOF
 }
 
@@ -186,6 +187,11 @@ case "$cmd" in
     ;;
   deploy)
     deploy/cloudrun.sh "$@"
+    ;;
+  refresh)
+    gcloud scheduler jobs run "${SERVICE:-jalaforest}-data-refresh" --location "${SCHEDULER_LOCATION:-europe-west1}" \
+      --project "${PROJECT:-client-jussialanen}"
+    echo "Started. Follow: gcloud builds list --project ${PROJECT:-client-jussialanen} --filter='tags=data-refresh' --limit 3"
     ;;
   password)
     gcloud secrets versions access latest --secret "${SERVICE:-jalaforest}-basic-auth-password" \

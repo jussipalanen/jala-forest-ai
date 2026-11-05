@@ -1,0 +1,45 @@
+{
+  "//": "Scheduled data refresh: import WFS data into Neon, rebuild the app image with the new GeoParquet export and deploy it. If the import fails, the build stops before deploying, so the app keeps the last good data. Placeholders (@...@) are filled in by deploy/refresh-setup.sh.",
+  "steps": [
+    {
+      "id": "clone",
+      "name": "gcr.io/cloud-builders/git",
+      "args": ["clone", "--depth", "1", "--branch", "@GIT_REF@", "@REPO_URL@", "src"]
+    },
+    {
+      "id": "import",
+      "name": "python:3.14-slim",
+      "dir": "src",
+      "entrypoint": "bash",
+      "args": ["-c", "pip install --quiet --root-user-action=ignore uv==0.13.7 && uv run --frozen --no-dev jalaforest run"],
+      "secretEnv": ["DATABASE_URL"]
+    },
+    {
+      "id": "build",
+      "name": "gcr.io/cloud-builders/docker",
+      "dir": "src",
+      "args": ["build", "-t", "@IMAGE@:refresh-$BUILD_ID", "."]
+    },
+    {
+      "id": "push",
+      "name": "gcr.io/cloud-builders/docker",
+      "args": ["push", "@IMAGE@:refresh-$BUILD_ID"]
+    },
+    {
+      "id": "deploy",
+      "name": "gcr.io/google.com/cloudsdktool/cloud-sdk:slim",
+      "entrypoint": "gcloud",
+      "args": ["run", "services", "update", "@SERVICE@", "--region", "@REGION@",
+               "--image", "@IMAGE@:refresh-$BUILD_ID", "--quiet"]
+    }
+  ],
+  "availableSecrets": {
+    "secretManager": [
+      {"versionName": "projects/@PROJECT@/secrets/@SERVICE@-database-url/versions/latest", "env": "DATABASE_URL"}
+    ]
+  },
+  "serviceAccount": "projects/@PROJECT@/serviceAccounts/@BUILD_SA@",
+  "options": {"logging": "CLOUD_LOGGING_ONLY"},
+  "timeout": "1800s",
+  "tags": ["@SERVICE@", "data-refresh"]
+}

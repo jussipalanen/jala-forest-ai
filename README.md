@@ -64,6 +64,7 @@ Vaatimukset: Docker ja Docker Compose (testattu Docker Desktop 29.7.2 / WSL2) se
 | `./dev lint` / `test` / `e2e` | Ruff, yksikkö- ja integraatiotestit, Playwright-selaintestit |
 | `./dev smoke` | Rakentaa imagen ja testaa kirjautumisen, `robots.txt`:n ja `/health`-tarkistuksen |
 | `./dev deploy` / `password` | Julkaisee Cloud Runiin / näyttää kirjautumissalasanan |
+| `./dev refresh` | Käynnistää ajastetun aineistopäivityksen heti (Neon → image → julkaisu) |
 
 Portit voi vaihtaa muuttujilla `POSTGIS_PORT`, `APP_PORT` ja `PGADMIN_PORT`.
 
@@ -115,6 +116,35 @@ kummassakaan tapauksessa, vaan lukee viedyn GeoParquet-tiedoston.
 - Varmennettu 5.11.2026: sama tulos kuin paikallisesti (333 kuviota, 81 Natura-alueella, 44,3131 ha), ja
   Shapely-vertailussa ei poikkeamia. Laskentatulosten erot ovat enintään 1,8e-15 ha (Neonin GEOS 3.12 vs.
   paikallinen 3.14), eli ne katoavat viennin 4 desimaalin pyöristyksessä.
+
+</details>
+
+<details>
+<summary><b>🔄 Ajastettu aineiston päivitys (Neon → Cloud Run)</b></summary>
+
+Cloud Scheduler käynnistää maanantaisin klo 5.00 (Europe/Helsinki) Cloud Buildin, joka
+
+1. hakee repositorion `main`-haaran,
+2. ajaa tuonnin ja PostGIS-analyysin Neoniin (`jalaforest run`, osoite Secret Managerista
+   `jalaforest-database-url`),
+3. rakentaa sovelluksen imagen uudella GeoParquet-viennillä ja
+4. julkaisee sen (`gcloud run services update --image`).
+
+Jos tuonti epäonnistuu tai jää vajaaksi, ajo pysähtyy ennen julkaisua: Neon säilyttää viimeisen onnistuneen
+version ja kartta edellisen aineiston. Ajot näkyvät: `gcloud builds list --filter='tags=data-refresh'`.
+
+```bash
+deploy/refresh-setup.sh        # luo tai päivittää ajastuksen, salaisuuden ja oikeudet (toistettava)
+./dev refresh                  # käynnistää päivityksen heti
+```
+
+- Oma palvelutili `jalaforest-build`, jolla vain tarvittavat oikeudet: salaisuuden luku, kuvarekisteriin
+  kirjoitus, palvelun päivitys, ajo sovelluksen palvelutilinä sekä Cloud Buildin käynnistys ja lokit.
+- Cloud Scheduler ei ole tarjolla `europe-north1`:ssä, joten ajastus on `europe-west1`:ssä; build ja
+  palvelu pysyvät ennallaan.
+- Kustannus: yksi ajo kestää noin 5 min Cloud Buildissa (ilmaiskiintiö 2 500 min/kk), Neon on hereillä
+  muutaman minuutin (ilmaistaso 100 CU-h), ajastus kuuluu ilmaisiin kolmeen ajastukseen laskutustiliä kohden.
+- Varmennettu 5.11.2026: koko ajo onnistui (`jalaforest-00004-k98`), ja kartta näytti uuden hakuajan.
 
 </details>
 
