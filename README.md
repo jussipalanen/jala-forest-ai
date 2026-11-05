@@ -18,6 +18,7 @@
 ![uv](https://img.shields.io/badge/uv-DE5FE9?logo=uv&logoColor=white)
 ![Ruff](https://img.shields.io/badge/Ruff-D7FF64?logo=ruff&logoColor=black)
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)
+![pgAdmin](https://img.shields.io/badge/pgAdmin-9.19-336791?logo=postgresql&logoColor=white)
 
 </div>
 
@@ -46,19 +47,42 @@ Vaatimukset: Docker ja Docker Compose (testattu Docker Desktop 29.7.2 / WSL2) se
 
 | Komento | Toiminto |
 |---|---|
-| `./dev up` | Rakentaa ja käynnistää PostGISin (`localhost:5433`) ja kartan (`localhost:8501`), odottaa molempia |
-| `./dev restart [postgis\|app]` | Pakottaa kontit uusiksi: poistaa vanhat ja luo uudet (myös imagen uudelleenrakennus), tietokantavolyymi säilyy |
+| `./dev up` | Rakentaa ja käynnistää PostGISin (`localhost:5433`), kartan (`localhost:8501`) ja pgAdminin (`localhost:5050`), odottaa valmiutta |
+| `./dev restart [postgis\|app\|pgadmin]` | Pakottaa kontit uusiksi: poistaa vanhat ja luo uudet (myös imagen uudelleenrakennus), tietokantavolyymi säilyy |
 | `./dev down` | Pysäyttää ja poistaa kontit, tietokantavolyymi säilyy |
 | `./dev build` | Rakentaa sovelluksen imagen uudelleen |
-| `./dev logs [postgis\|app] [-f]` | Näyttää lokit |
+| `./dev logs [postgis\|app\|pgadmin] [-f]` | Näyttää lokit |
 | `./dev ps` | Konttien tila |
 | `./dev psql` | psql PostGIS-kontissa |
+| `./dev dbui` | Käynnistää pgAdminin ja avaa sen selaimeen |
 | `./dev reset` | Poistaa kontit **ja** tietokantavolyymin (kysyy vahvistuksen) |
 | `./dev run` | Tuonti → analyysi → GeoParquet-vienti (isäntäkoneella uv:llä) |
 | `./dev app` | Käynnistää kartan isäntäkoneella Dockerin sijaan (lukee `.env`:n) |
 | `./dev lint` / `test` / `e2e` | Ruff, yksikkö- ja integraatiotestit, Playwright-selaintestit |
 
-Portit voi vaihtaa muuttujilla `POSTGIS_PORT` ja `APP_PORT`.
+Portit voi vaihtaa muuttujilla `POSTGIS_PORT`, `APP_PORT` ja `PGADMIN_PORT`.
+
+</details>
+
+<details>
+<summary><b>🗄️ Tietokannan selain (pgAdmin)</b></summary>
+
+**http://localhost:5050** (tai `./dev dbui`). pgAdmin on paikallista kehitystä varten: se kuuntelee vain
+`localhost`-osoitetta, ei vaadi kirjautumista ja on valmiiksi yhdistetty tietokantaan
+(*Local → JalaForest PostGIS*). Tietokannan salasana luetaan kontin sisällä luotavasta pgpass-tiedostosta.
+
+- Taulut: *Databases → jalaforest → Schemas → public → Tables* (`forest_stands`, `natura_sites`,
+  `stand_natura_overlap`, `import_runs`). Hiiren oikealla: *View/Edit Data → All Rows*.
+- Geometriat kartalla: avaa *Query Tool*, aja esimerkiksi alla oleva kysely ja paina tulostaulukon
+  `geom`-sarakkeen otsikon karttakuvaketta (*Geometry Viewer*).
+
+```sql
+SELECT s.stand_id, round(o.natura_overlap_ha::numeric, 4) AS natura_ha, s.geom
+FROM stand_natura_overlap o JOIN forest_stands s USING (stand_id)
+WHERE o.natura_overlap_ha > 0
+UNION ALL
+SELECT NULL, NULL, n.geom FROM natura_sites n;
+```
 
 </details>
 
