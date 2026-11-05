@@ -19,6 +19,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from jalaforest.assistant import Assistant, AssistantError, ai_enabled
+from jalaforest.explain import COLUMNS, METHOD_FI, calculation_steps_fi, stand_table
 from jalaforest.search import (
     NATURA_HIT_MIN_HA,
     SearchFilters,
@@ -183,6 +184,9 @@ with appbar:
         '<p>JalaForest AI · Joensuu, Noljakka</p></div></div>',
         width="content",
     )
+    actions = st.container(key="appbar_actions", horizontal=True, width="content", gap="small")
+open_data = actions.button("Aineisto", icon=":material/table_view:", key="open_data",
+                           help="Kaikki kuviot taulukkona ja pinta-alojen laskenta")
 
 card = st.container(key="card")
 status_box = card.empty()
@@ -190,7 +194,7 @@ if prompt and ai_on:
     run_conversation(prompt.strip(), status_box)
 sync_widgets(ss.filters)
 
-with appbar, st.popover("Suodattimet", icon=":material/tune:", key="filters"):
+with actions, st.popover("Suodattimet", icon=":material/tune:", key="filters"):
     st.markdown("#### Suodattimet")
     st.number_input("Pinta-ala vähintään (ha)", min_value=0.0, step=0.5, key="w_min_area",
                     on_change=filters_from_widgets)
@@ -215,6 +219,48 @@ with appbar, st.popover("Suodattimet", icon=":material/tune:", key="filters"):
 result = apply_filters(stands, ss.filters)
 summary = summarize(result)
 hit_ids = set(result["stand_id"])
+
+
+@st.dialog("Kaikki kuviot ja pinta-alojen laskenta", width="large")
+def data_dialog() -> None:
+    st.markdown(METHOD_FI)
+    only_hits = st.toggle("Näytä vain hakuun osuvat kuviot", value=not ss.filters.is_empty(), key="dlg_only_hits")
+    table = stand_table(stands, hit_ids)
+    if only_hits:
+        table = table[table[COLUMNS["hit"]]].reset_index(drop=True)
+    st.caption(f"{len(table)} kuviota. Lajittele sarakkeen otsikosta, lataa CSV taulukon työkaluista ja valitse "
+               "rivi nähdäksesi kuvion laskennan vaihe vaiheelta.")
+    event = st.dataframe(
+        table,
+        hide_index=True,
+        height=320,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="dlg_table",
+        column_config={
+            COLUMNS["stand_id"]: st.column_config.NumberColumn(format="%d"),
+            COLUMNS["area"]: st.column_config.NumberColumn(format="%.4f"),
+            COLUMNS["source_area"]: st.column_config.NumberColumn(format="%.3f"),
+            COLUMNS["natura_ha"]: st.column_config.NumberColumn(format="%.4f"),
+            COLUMNS["natura_pct"]: st.column_config.ProgressColumn(format="%.2f %%", min_value=0, max_value=100),
+            COLUMNS["hit"]: st.column_config.CheckboxColumn(),
+        },
+    )
+    selected = event.selection.rows
+    if not selected:
+        return
+    row = table.iloc[selected[0]]
+    st.markdown(f"##### Kuvio {row[COLUMNS['kuvio']]} (ID {row[COLUMNS['stand_id']]})")
+    steps = calculation_steps_fi(row)
+    st.table({
+        "Vaihe": [step.title for step in steps],
+        "Laskenta": [step.formula for step in steps],
+        "Tulos": [step.result for step in steps],
+    })
+
+
+if open_data:
+    data_dialog()
 
 def stat(value: str, label: str) -> str:
     return f'<div class="stat"><span class="stat-value">{value}</span><span class="stat-label">{label}</span></div>'

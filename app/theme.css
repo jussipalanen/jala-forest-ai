@@ -237,3 +237,24 @@
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Header actions and the data dialog. */
+.st-key-appbar_actions { flex-wrap: nowrap !important; }
+.st-key-appbar_actions [data-testid="stBaseButton-secondary"] {
+  background: #fff;
+  color: var(--forest-700);
+  border: 0;
+  border-radius: 10px;
+  font-weight: 600;
+  min-height: 44px;
+}
+.st-key-appbar_actions [data-testid="stBaseButton-secondary"]:hover { background: var(--forest-100); }
+.st-key-appbar_actions [data-testid="stBaseButton-secondary"]:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+[data-testid="stDialog"] h2 { color: var(--forest-900); }
+@media (max-width: 600px) {
+  /* Icon-only header buttons on phones; labels stay available to screen readers. */
+  .st-key-appbar_actions [data-testid="stBaseButton-secondary"] p {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+}

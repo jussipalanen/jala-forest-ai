@@ -22,6 +22,7 @@ def write_synthetic_stands(path: Path) -> Path:
             "stand_number_extension": [None] * len(ROWS),
             "mean_age": [50.0] * len(ROWS),
             "volume_m3_per_ha": [200.0] * len(ROWS),
+            "source_area_ha": [r[1] + 0.001 for r in ROWS],
             "stand_area_ha": [r[1] for r in ROWS],
             "natura_overlap_ha": [r[2] for r in ROWS],
             "natura_overlap_pct": [100 * r[2] / r[1] for r in ROWS],

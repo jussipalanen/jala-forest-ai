@@ -12,6 +12,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - pgAdmin 4 web UI for local development at http://localhost:5050 (localhost only, no login), started by
   `./dev up` and preconfigured with the project database; `./dev dbui` opens it.
+- "Aineisto" data view in the app: a sortable, downloadable table of all stands with the PostGIS area,
+  the source area, the Natura overlap and share, and a step-by-step calculation for the selected stand.
+
+### Fixed
+
+- Finnish number formatting trimmed zeros from whole numbers when no decimals were shown, so a volume of
+  400 m³/ha appeared as 4 m³/ha in the stand info box.
 
 ## [0.2.0] - 2026-11-05
 

@@ -110,6 +110,10 @@ kirjoittaa henkilötietoja.
 
 - **Yläpalkki** logolla ja sovelluksen nimellä sekä **Suodattimet**-painike (pinta-ala, Natura 2000 -ehto,
   Natura-osuus ja aineiston lähdetiedot). Keskusteluhaun tulos päivittää samat suodattimet.
+- **Aineisto**-painike avaa taulukon kaikista kuvioista: PostGISin laskema pinta-ala, Metsäkeskuksen
+  ilmoittama pinta-ala, Natura-päällekkäisyys hehtaareina ja prosentteina, Natura-alue ja osuuko kuvio
+  hakuun. Taulukon voi lajitella ja ladata CSV:nä, ja rivin valinta näyttää kuvion laskennan vaihe
+  vaiheelta (m² → ha, osuus, 0,01 ha:n osumaraja, vertailu lähteeseen).
 - **Kartta täyttää koko näkymän** yläpalkin alla (Folium / Leaflet, OpenStreetMap-pohjakartta). Hakuun
   osuvat kuviot korostetaan vihreällä, muut näkyvät harmaina. Kuviota napsauttamalla aukeaa tietolaatikko:
   pinta-ala, Natura-osuus hehtaareina ja prosentteina, Natura-alue, keski-ikä ja tilavuus.
@@ -202,8 +206,8 @@ uv run jalaforest export       # GeoParquet (EPSG:4326)
 
 ```bash
 ./dev lint      # ruff
-./dev test      # 42 yksikkö- ja integraatiotestiä (PostGIS käynnissä)
-./dev e2e       # 9 Playwright-selaintestiä; Gemini-testi ajetaan vain, jos GEMINI_API_KEY on asetettu
+./dev test      # 46 yksikkö- ja integraatiotestiä (PostGIS käynnissä)
+./dev e2e       # 10 Playwright-selaintestiä; Gemini-testi ajetaan vain, jos GEMINI_API_KEY on asetettu
 uv run jalaforest fingerprint   # taulujen sisällön tiiviste; sama ennen ja jälkeen uudelleenajon
 uv run jalaforest crosscheck    # laskee osuudet uudelleen Shapelyllä ja vertaa PostGISiin
 ```
@@ -220,6 +224,8 @@ Ensimmäisellä kerralla selain asennetaan komennolla `uv run playwright install
 - **Tuonti**: epäonnistunut tuonti säilyttää edellisen version, saman aineiston uudelleentuonti ei muuta
   tilaa, nollatulos on onnistunut tuonti. WFS-sivutus, vajaa tulos, toistuvat tunnisteet ja väärä CRS.
 - **Haku**: Pydantic-validointi, suodattimet, Natura-kynnys, suomenkielinen yhteenveto ja nollatulos.
+- **Aineistotaulukko**: kaikki kuviot suuruusjärjestyksessä, laskennan vaiheet ja suikaleen osumaraja;
+  selaintesti valitsee rivin ja tarkistaa vaiheet.
 - **Gemini-kytkentä** valeasiakkaalla: tarkennus → haku, keskusteluhistoria, virheelliset vastaukset,
   API-virhe, ruuhka ja varamalli, puuttuva avain ja `AI_ENABLED`-kytkin.
 - **Streamlit** (AppTest) ja **Playwright**: yläpalkki, kortti ja kartta työpöydällä, tabletilla ja
