@@ -95,12 +95,14 @@ SELECT NULL, NULL, n.geom FROM natura_sites n;
 <summary><b>🐘 Pilvitietokanta (Neon)</b></summary>
 
 Tuonnin ja PostGIS-analyysin voi ajaa paikallisen tietokannan sijaan [Neonissa](https://neon.com)
-(projekti `jala-forest-ai`, PostgreSQL 18, PostGIS 3.6.4, AWS London). Kartta ei käytä tietokantaa
+(projekti `jala-forest-ai`, haara `production`, tietokanta `jalaforest`; PostgreSQL 18, PostGIS 3.6.4,
+AWS London). Ympäristö on haaran nimessä, tietokannan nimi on sama kuin paikallisesti: testihaarat
+(`dev`, `test-import`) saavat oman kopion samannimisestä tietokannasta. Kartta ei käytä tietokantaa
 kummassakaan tapauksessa, vaan lukee viedyn GeoParquet-tiedoston.
 
 1. Neonin konsolissa *Connect* → poista *Connection pooling* (suora osoite ilman `-pooler`) ja lisää
    yhteysosoite `.env`-tiedostoon sellaisenaan:
-   `DATABASE_URL=postgresql://neondb_owner:…@ep-….eu-west-2.aws.neon.tech/neondb?sslmode=require`
+   `DATABASE_URL=postgresql://neondb_owner:…@ep-….eu-west-2.aws.neon.tech/jalaforest?sslmode=require`
    (`postgresql://` muunnetaan automaattisesti psycopg 3 -muotoon).
 2. `./dev run --neon` ajaa tuonnin, analyysin ja viennin Neoniin; ensimmäinen ajo luo PostGIS-laajennuksen
    ja taulut. Komento tulostaa, mihin tietokantaan se kirjoittaa. Pelkkä `./dev run` käyttää aina paikallista.
