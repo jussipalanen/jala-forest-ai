@@ -1,5 +1,5 @@
 # Streamlit map app. Reads the GeoParquet export from DATA_PATH; it does not need PostGIS.
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /bin/uv
 
