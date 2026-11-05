@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Changed
+
+- PostGIS 18.6 / 3.6 (Dependabot #5) and Python 3.15 in the app image (#6); CI tests on PostGIS 18 too.
+
+### Fixed
+
+- The PostGIS 18 image expects its volume at `/var/lib/postgresql`, so the local database did not start
+  after the upgrade. It now uses a new `postgis18-data` volume at that path; recreate the data with
+  `./dev run` (PostgreSQL 17 data cannot be opened by 18).
+
 ## [0.3.0] - 2026-11-05
 
 Data inspection: pgAdmin and an in-app data view.
