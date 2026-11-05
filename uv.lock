@@ -616,16 +616,13 @@ wheels = [
 name = "jalaforest"
 version = "0.3.0"
 source = { editable = "." }
+default-groups = ["dev", "pipeline"]
 dependencies = [
     { name = "folium" },
-    { name = "geoalchemy2" },
     { name = "geopandas" },
     { name = "google-genai" },
-    { name = "psycopg", extra = ["binary"] },
     { name = "pyarrow" },
     { name = "pydantic" },
-    { name = "requests" },
-    { name = "sqlalchemy" },
     { name = "streamlit" },
     { name = "streamlit-folium" },
 ]
@@ -637,18 +634,20 @@ dev = [
     { name = "pytest-playwright" },
     { name = "ruff" },
 ]
+pipeline = [
+    { name = "geoalchemy2" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "requests" },
+    { name = "sqlalchemy" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "folium", specifier = ">=0.20.0" },
-    { name = "geoalchemy2", specifier = ">=0.15" },
     { name = "geopandas", specifier = ">=1.0" },
     { name = "google-genai", specifier = ">=2.34.0" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pyarrow", specifier = ">=17" },
     { name = "pydantic", specifier = ">=2.14.3" },
-    { name = "requests", specifier = ">=2.32" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
     { name = "streamlit", specifier = ">=1.66.1" },
     { name = "streamlit-folium", specifier = ">=0.27.4" },
 ]
@@ -659,6 +658,12 @@ dev = [
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-playwright", specifier = ">=0.10.0" },
     { name = "ruff", specifier = ">=0.17.3" },
+]
+pipeline = [
+    { name = "geoalchemy2", specifier = ">=0.15" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "requests", specifier = ">=2.32" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
 ]
 
 [[package]]
