@@ -31,4 +31,7 @@ check "right password is accepted"    200 "$(code -u "$USER_:$PASS" "$URL/")"
 check "X-Robots-Tag on app"   1 "$(curl -s -D - -o /dev/null -u "$USER_:$PASS" "$URL/" | grep -ci '^x-robots-tag: noindex')"
 check "X-Robots-Tag on 401"   1 "$(curl -s -D - -o /dev/null "$URL/" | grep -ci '^x-robots-tag: noindex')"
 check "no Server header"      0 "$(curl -s -D - -o /dev/null "$URL/" | grep -ci '^server:' || true)"
+# OpenStreetMap blocks tiles requested without a Referer ("Access blocked"), so never no-referrer.
+check "Referer kept for map tiles" 1 "$(curl -s -D - -o /dev/null -u "$USER_:$PASS" "$URL/" \
+  | grep -ci '^referrer-policy: strict-origin-when-cross-origin')"
 exit "$fail"

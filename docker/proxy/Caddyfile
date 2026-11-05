@@ -14,7 +14,9 @@
 (robots) {
 	header {
 		X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai"
-		Referrer-Policy "no-referrer"
+		# OpenStreetMap's tile servers block browser requests without a Referer, so send the
+		# origin (never the path) to other sites.
+		Referrer-Policy "strict-origin-when-cross-origin"
 		X-Content-Type-Options "nosniff"
 		-Server
 	}
