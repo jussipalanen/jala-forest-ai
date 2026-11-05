@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke-test the app image with the login on: robots.txt and /healthz are public,
+# Smoke-test the app image with the login on: robots.txt and /health are public,
 # everything else needs the password, and every response carries X-Robots-Tag.
 #   deploy/smoke-test.sh [IMAGE]
 set -euo pipefail
@@ -14,7 +14,7 @@ URL="http://127.0.0.1:${PORT}"
 docker run -d --name "$NAME" -p "127.0.0.1:${PORT}:8080" -e PORT=8080 -e AI_ENABLED=false \
   -e BASIC_AUTH_USER="$USER_" -e BASIC_AUTH_HASH="$HASH" "$IMAGE" >/dev/null
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT
-for _ in $(seq 1 60); do curl -sf "$URL/healthz" >/dev/null && break; sleep 1; done
+for _ in $(seq 1 60); do curl -sf "$URL/health" >/dev/null && break; sleep 1; done
 
 fail=0
 check() {  # check DESCRIPTION EXPECTED ACTUAL
@@ -23,7 +23,7 @@ check() {  # check DESCRIPTION EXPECTED ACTUAL
 code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 check "robots.txt is public"          200 "$(code "$URL/robots.txt")"
 check "robots.txt disallows all"      "Disallow: /" "$(curl -s "$URL/robots.txt" | grep -m1 -x 'Disallow: /')"
-check "healthz is public"             ok  "$(curl -s "$URL/healthz")"
+check "health is public"             ok  "$(curl -s "$URL/health")"
 check "app needs login"               401 "$(code "$URL/")"
 check "websocket needs login"         401 "$(code "$URL/_stcore/stream")"
 check "wrong password is rejected"    401 "$(code -u "$USER_:wrong" "$URL/")"

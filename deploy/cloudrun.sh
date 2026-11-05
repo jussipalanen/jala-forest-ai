@@ -119,6 +119,6 @@ step "Done"
 cat <<EOF
 URL:        ${url}
 Login:      ${LOGIN_USER} / password: gcloud secrets versions access latest --secret ${SECRET_PASSWORD} --project ${PROJECT}
-Health:     ${url}/healthz   (for UptimeRobot, no login; answers "ok")
+Health:     ${url}/health   (for UptimeRobot, no login; answers "ok")
 robots.txt: ${url}/robots.txt
 EOF

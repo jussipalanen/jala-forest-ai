@@ -31,7 +31,7 @@ Pipeline, app and tests (run on the host with uv):
   lint            Run ruff
   test            Run unit and integration tests (PostGIS must be up)
   e2e             Run Playwright browser tests (loads .env if present)
-  smoke           Build the app image and smoke-test login, robots.txt and /healthz
+  smoke           Build the app image and smoke-test login, robots.txt and /health
 
 Cloud Run:
   deploy [--new-password]  Build, push and deploy to Cloud Run (deploy/cloudrun.sh)

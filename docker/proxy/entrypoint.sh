@@ -15,6 +15,20 @@ streamlit run app/streamlit_app.py \
   --server.enableXsrfProtection true &
 st_pid=$!
 
+# Start listening on $PORT only once Streamlit answers. Cloud Run treats the container as
+# starting until the port is open and gives it full CPU meanwhile; with request-based
+# billing an already-"ready" container is CPU-throttled, which made startup take minutes.
+python - <<'PY'
+import sys, time, urllib.request
+for _ in range(240):
+    try:
+        urllib.request.urlopen("http://127.0.0.1:8502/_stcore/health", timeout=1)
+        sys.exit(0)
+    except OSError:
+        time.sleep(0.5)
+sys.exit("Streamlit did not start within 120 s")
+PY
+
 caddy run --config /etc/caddy/Caddyfile --adapter caddyfile &
 caddy_pid=$!
 

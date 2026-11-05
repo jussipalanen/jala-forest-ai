@@ -42,7 +42,7 @@
 	}
 	# Uptime checks (e.g. UptimeRobot) without credentials: reports whether Streamlit is up,
 	# exposes no data.
-	handle /healthz {
+	handle /health {
 		rewrite * /_stcore/health
 		reverse_proxy 127.0.0.1:8502
 	}
