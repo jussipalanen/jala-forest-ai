@@ -30,5 +30,33 @@ services:
     volumes:
       - ./data/export:/app/data/export:ro
 
+  # Database web UI for local development: http://localhost:5050 (no login, localhost only).
+  # Preconfigured with the project database; the Geometry Viewer shows PostGIS geometries on a map.
+  pgadmin:
+    image: dpage/pgadmin4:9.19.0
+    container_name: jalaforest-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com      # required by the image, unused in desktop mode
+      PGADMIN_DEFAULT_PASSWORD: jalaforest
+      PGADMIN_CONFIG_SERVER_MODE: "False"           # desktop mode: no pgAdmin login
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
+    # pgAdmin reads the database password from a pgpass file that must be private (0600),
+    # so it is written inside the container rather than bind-mounted from the host.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - printf 'postgis:5432:*:jalaforest:jalaforest\n' > /var/lib/pgadmin/pgpass
+        && chmod 600 /var/lib/pgadmin/pgpass && exec /entrypoint.sh
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgis:
+        condition: service_healthy
+
 volumes:
   postgis-data:
+  pgadmin-data:
