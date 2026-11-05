@@ -107,3 +107,21 @@ def test_accessibility(page: Page, app_url):
     results = Axe().run(page)
     serious = [v for v in results.response["violations"] if v["impact"] in ("serious", "critical")]
     assert not serious, results.generate_report()
+
+
+def test_data_table_shows_calculation_for_selected_stand(page: Page, app_url):
+    page.set_viewport_size({"width": 1440, "height": 900})
+    open_app(page, app_url)
+    page.get_by_role("button", name="Aineisto").click()
+    dialog = page.get_by_role("dialog")
+    expect(dialog).to_contain_text("Miten pinta-alat lasketaan")
+    expect(dialog).to_contain_text("4 kuviota.")
+
+    grid = dialog.locator("[data-testid=stDataFrame]")
+    expect(grid).to_be_visible()
+    box = grid.bounding_box()
+    # Row-selection checkbox of the first row (largest stand: id 4, 4 ha, 0.005 ha sliver).
+    page.mouse.click(box["x"] + 18, box["y"] + 35 + 17)
+    expect(dialog).to_contain_text("Kuvio 4 (ID 4)")
+    expect(dialog).to_contain_text("ST_Area(kuvio) = 40 000 m²")
+    expect(dialog).to_contain_text("0,005 ha < 0,01 ha")
