@@ -8,8 +8,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+
+- Cloud Run deployment (`./dev deploy`, `deploy/cloudrun.sh`): new `jalaforest` service in
+  `client-jussialanen` / `europe-north1`, scaling to zero with at most one instance, request-based billing,
+  secrets in Secret Manager, a dedicated service account, registry cleanup and a monthly budget alert.
+- Login: a Caddy proxy in the app container asks for a username and password (HTTP Basic Auth) for all
+  content, including the WebSocket.
+- Search engines and AI crawlers are blocked with `robots.txt` and an `X-Robots-Tag: noindex, noai` header.
+- Public `/health` check for uptime monitoring (e.g. UptimeRobot).
+- Container smoke test (`./dev smoke`, also in CI); `./dev password` shows the login password.
+
 ### Changed
 
+- The GeoParquet export is built into the app image.
+- The import and PostGIS libraries are a separate `pipeline` dependency group, left out of the app image.
 - PostGIS 18.6 / 3.6 (Dependabot #5) and Python 3.15 in the app image (#6); CI tests on PostGIS 18 too.
 
 ### Fixed

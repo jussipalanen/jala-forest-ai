@@ -26,8 +26,8 @@ Pieni paikkatietodemo, jossa käyttäjä hakee metsäkuvioita suomeksi ja näkee
 
 ### 3. Julkaisu Cloud Runissa
 
-- [ ] Pakkaa Streamlit-sovellus ja lukuvalmis GeoParquet-tiedosto samaan konttiin. Docker Compose dokumentoi paikallisen PostGIS-laskennan, ja julkaistu kartta lukee siitä viedyn aineiston.
-- [ ] Varmista käynnistys Cloud Runin `PORT`-asetuksella ja testaa kartta, tarkentava kysymys sekä tulosyhteenveto. Dokumentoi Gemini-avaimen palvelinpuolen asetukset ja jaetun demon käyttöehdot.
+- [x] Pakkaa Streamlit-sovellus ja lukuvalmis GeoParquet-tiedosto samaan konttiin. Docker Compose dokumentoi paikallisen PostGIS-laskennan, ja julkaistu kartta lukee siitä viedyn aineiston.
+- [x] Varmista käynnistys Cloud Runin `PORT`-asetuksella ja testaa kartta, tarkentava kysymys sekä tulosyhteenveto. Dokumentoi Gemini-avaimen palvelinpuolen asetukset ja jaetun demon käyttöehdot.
 
 ## Hyväksymisesimerkki
 

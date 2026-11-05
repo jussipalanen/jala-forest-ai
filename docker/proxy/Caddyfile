@@ -1,0 +1,76 @@
+# Reverse proxy in front of Streamlit (same container).
+# - Blocks search engines and AI crawlers: robots.txt + X-Robots-Tag on every response.
+# - Optional HTTP Basic Auth for everything except robots.txt, enabled when
+#   BASIC_AUTH_USER and BASIC_AUTH_HASH (bcrypt, `caddy hash-password`) are set.
+{
+	admin off
+	auto_https off
+	persist_config off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+(robots) {
+	header {
+		X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai"
+		Referrer-Policy "no-referrer"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	handle /robots.txt {
+		header Content-Type "text/plain; charset=utf-8"
+		respond <<TXT
+			# Private demo: no search engines, no AI crawlers or training.
+			User-agent: *
+			Disallow: /
+
+			User-agent: GPTBot
+			User-agent: ChatGPT-User
+			User-agent: OAI-SearchBot
+			User-agent: ClaudeBot
+			User-agent: Claude-SearchBot
+			User-agent: anthropic-ai
+			User-agent: Google-Extended
+			User-agent: PerplexityBot
+			User-agent: CCBot
+			User-agent: Bytespider
+			User-agent: Applebot-Extended
+			User-agent: meta-externalagent
+			Disallow: /
+			TXT 200
+	}
+	# Uptime checks (e.g. UptimeRobot) without credentials: reports whether Streamlit is up,
+	# exposes no data.
+	handle /health {
+		rewrite * /_stcore/health
+		reverse_proxy 127.0.0.1:8502
+	}
+}
+
+(auth_on) {
+	handle {
+		basic_auth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		reverse_proxy 127.0.0.1:8502
+	}
+}
+
+(auth_off) {
+	handle {
+		reverse_proxy 127.0.0.1:8502
+	}
+}
+
+:{$PORT:8080} {
+	import robots
+	import auth_{$AUTH_MODE:off}
+
+	# Error responses (e.g. the 401 login prompt) bypass the header block above.
+	handle_errors {
+		header X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai"
+		header -Server
+		respond "{err.status_code} {err.status_text}"
+	}
+}

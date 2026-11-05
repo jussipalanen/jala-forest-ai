@@ -31,6 +31,11 @@ Pipeline, app and tests (run on the host with uv):
   lint            Run ruff
   test            Run unit and integration tests (PostGIS must be up)
   e2e             Run Playwright browser tests (loads .env if present)
+  smoke           Build the app image and smoke-test login, robots.txt and /health
+
+Cloud Run:
+  deploy [--new-password]  Build, push and deploy to Cloud Run (deploy/cloudrun.sh)
+  password        Show the Cloud Run login password
 EOF
 }
 
@@ -166,6 +171,18 @@ case "$cmd" in
   e2e)
     # shellcheck disable=SC2046
     uv run $(env_file_args) pytest -m e2e "$@"
+    ;;
+  smoke)
+    docker build -q -t jalaforest-app:local . >/dev/null
+    deploy/smoke-test.sh jalaforest-app:local
+    ;;
+  deploy)
+    deploy/cloudrun.sh "$@"
+    ;;
+  password)
+    gcloud secrets versions access latest --secret "${SERVICE:-jalaforest}-basic-auth-password" \
+      --project "${PROJECT:-client-jussialanen}"
+    echo
     ;;
   help | -h | --help)
     usage

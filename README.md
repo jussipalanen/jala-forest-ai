@@ -19,6 +19,8 @@
 ![Ruff](https://img.shields.io/badge/Ruff-D7FF64?logo=ruff&logoColor=black)
 ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)
 ![pgAdmin](https://img.shields.io/badge/pgAdmin-9.19-336791?logo=postgresql&logoColor=white)
+![Cloud Run](https://img.shields.io/badge/Cloud%20Run-europe--north1-4285F4?logo=googlecloud&logoColor=white)
+![Caddy](https://img.shields.io/badge/Caddy-2.11-1F88C0?logo=caddy&logoColor=white)
 
 </div>
 
@@ -59,6 +61,8 @@ Vaatimukset: Docker ja Docker Compose (testattu Docker Desktop 29.7.2 / WSL2) se
 | `./dev run` | Tuonti → analyysi → GeoParquet-vienti (isäntäkoneella uv:llä) |
 | `./dev app` | Käynnistää kartan isäntäkoneella Dockerin sijaan (lukee `.env`:n) |
 | `./dev lint` / `test` / `e2e` | Ruff, yksikkö- ja integraatiotestit, Playwright-selaintestit |
+| `./dev smoke` | Rakentaa imagen ja testaa kirjautumisen, `robots.txt`:n ja `/health`-tarkistuksen |
+| `./dev deploy` / `password` | Julkaisee Cloud Runiin / näyttää kirjautumissalasanan |
 
 Portit voi vaihtaa muuttujilla `POSTGIS_PORT`, `APP_PORT` ja `PGADMIN_PORT`.
 
@@ -202,6 +206,71 @@ uv run jalaforest export       # GeoParquet (EPSG:4326)
 
 </details>
 
+## ☁️ Julkaisu (Cloud Run)
+
+Julkaistu demo: **https://jalaforest-4ittj6eczq-lz.a.run.app** (projekti `client-jussialanen`,
+alue `europe-north1`, palvelu `jalaforest`). Sovellus vaatii käyttäjätunnuksen ja salasanan, eikä se
+käytä tietokantaa: kontti lukee siihen rakennetun GeoParquet-viennin.
+
+```bash
+./dev deploy                 # rakentaa, pushaa ja julkaisee (deploy/cloudrun.sh, toistettava)
+./dev deploy --new-password  # sama + uusi kirjautumissalasana
+./dev password               # näyttää salasanan Secret Managerista (käyttäjä: jalaforest)
+./dev smoke                  # testaa imagen paikallisesti: kirjautuminen, robots.txt ja /health
+```
+
+Ennen julkaisua `./dev run` päivittää vietävän aineiston; julkaisu vaatii kirjautuneen `gcloud`-komennon.
+
+<details>
+<summary><b>🔒 Kirjautuminen, robotit ja terveystarkistus</b></summary>
+
+- Kontissa Caddy-välityspalvelin on Streamlitin edessä. Kaikki sisältö, myös sovelluksen
+  WebSocket-yhteys, vaatii HTTP Basic -kirjautumisen. Salasana on vain bcrypt-tiivisteenä palvelulla
+  (`jalaforest-basic-auth-hash`), selväkielisenä Secret Managerissa (`jalaforest-basic-auth-password`).
+- Hakukoneet ja tekoälyrobotit estetään: `robots.txt` kieltää kaiken (myös GPTBot, ClaudeBot,
+  Google-Extended, PerplexityBot, CCBot ym.), ja jokaisessa vastauksessa on
+  `X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai`.
+- **`/health`** vastaa ilman kirjautumista `ok`, kun Streamlit on käynnissä. UptimeRobotiin:
+  HTTP(s)- tai Keyword-monitori osoitteeseen `https://jalaforest-4ittj6eczq-lz.a.run.app/health`,
+  avainsana `ok`, väli 5 min. Ping maksaa käytännössä ei mitään, mutta Cloud Run voi silti sammuttaa
+  instanssin, jolloin ensimmäinen käynti odottaa noin 5 s käynnistystä.
+- `/healthz` ei toimi Cloud Runissa: Googlen etupalvelin varaa z-kirjaimeen päättyvät polut.
+
+</details>
+
+<details>
+<summary><b>💶 Kustannukset</b></summary>
+
+| Asetus | Arvo | Miksi |
+|---|---|---|
+| Instanssit | min 0, max 1 | Ei kulua tyhjäkäynnillä; enimmäiskulu rajattu |
+| CPU / muisti | 1 vCPU, 1 GiB, ei käynnistysboostia | Sovellus käyttää ~180 MB |
+| Laskutus | pyyntöpohjainen (CPU vain pyyntöjen aikana) | Ilmaiskiintiö: 180 000 vCPU-s, 360 000 GiB-s, 2 M pyyntöä / kk |
+| Image | n. 436 MB, rekisteri säilyttää 2 uusinta | Artifact Registryn ilmaiskiintiö 0,5 GB |
+| Salaisuudet | 3 Secret Manager -salaisuutta | Ilmaiskiintiö 6 versiota |
+| Budjetti | 1 / kk, hälytys 50 % ja 100 % (resurssit `app=jalaforest`) | Varoittaa ajoissa |
+
+Streamlit pitää avoimen välilehden yhteyden auki, ja se lasketaan pyynnön kestoksi: ilmaiskiintiö riittää
+noin 50 tuntiin avoimia istuntoja kuukaudessa. Ilmaiskiintiöt ovat laskutustilikohtaisia, joten saman
+tilin muut palvelut kuluttavat samaa kiintiötä. `europe-north1`:stä ulos lähtevä liikenne maksaa
+muutamia senttejä; karttatiilet tulevat OpenStreetMapin palvelimilta.
+
+</details>
+
+<details>
+<summary><b>📄 Käyttöehdot (jaettu demo)</b></summary>
+
+- Demo on tarkoitettu työnäytteeksi kirjautumistiedot saaneille. Tunnuksia ei jaeta eteenpäin.
+- Hakukenttään ei kirjoiteta henkilötietoja. Keskusteluhaku käyttää Gemini API:n ilmaistasoa, jolloin
+  Google voi käyttää kehotteita tuotteidensa kehittämiseen
+  ([Gemini API:n ehdot](https://aistudio.google.com/docs/terms#use-restrictions)).
+- Gemini-avain on vain palvelimella (`GEMINI_API_KEY` Secret Managerista); selain ei näe sitä.
+  Tekoälyhaun voi kytkeä pois muuttujalla `AI_ENABLED=false`.
+- Aineisto: Metsäkeskuksen metsävarakuviot ja Syken Natura 2000 -alueet avoimista rajapinnoista;
+  hakuajankohta näkyy Suodattimet-paneelissa.
+
+</details>
+
 ## ✅ Tarkistukset
 
 ```bash
@@ -264,4 +333,6 @@ Ensimmäisellä kerralla selain asennetaan komennolla `uv run playwright install
 - Tällä alueella ei ole todellisia päällekkäisiä Natura-alueita eikä pelkkiä reunakosketuksia, joten ne on
   varmennettu vain synteettisellä aineistolla.
 - Natura-alueen rajaa ei piirretä omana tasonaan; kuvioiden väri ja tietolaatikko kertovat osuuden.
-- Julkaisu Cloud Runiin on vaihe 3. Image tukee jo `PORT`-muuttujaa, mutta julkaisua ei ole tehty.
+- Playwrightin Chromium jää jumiin, jos se vastaa Basic-kirjautumishaasteeseen HTTP/2:n yli
+  (`http_credentials`). Firefox ja valmiiksi lähetetty `Authorization`-otsake toimivat; tavallinen selain näyttää
+  oman kirjautumisikkunansa.

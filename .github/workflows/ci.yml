@@ -57,4 +57,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: docker build -t jalaforest-app .
+      - uses: astral-sh/setup-uv@v7
+      # The real export is not in git; build the image with the small synthetic data set.
+      - run: |
+          mkdir -p data/export
+          uv run --no-default-groups python -c "import sys; sys.path.insert(0, 'tests'); \
+            from pathlib import Path; from synthetic import write_synthetic_stands; \
+            write_synthetic_stands(Path('data/export/stand_natura_overlap.parquet'))"
+      - run: docker build -t jalaforest-app:ci .
+      - run: deploy/smoke-test.sh jalaforest-app:ci
