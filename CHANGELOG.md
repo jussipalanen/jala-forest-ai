@@ -13,7 +13,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ### Added
 
 - `CHANGELOG.md` with semantic versioning, and a rule in `AGENTS.md` to record every change here and
-  keep the `pyproject.toml` version in sync.
+  keep the `pyproject.toml` version in sync,
+  then tag each merged version `vX.Y.Z` and publish it with `gh release`.
 
 ### Changed
 
