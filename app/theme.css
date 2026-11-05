@@ -1,0 +1,239 @@
+/* Light-green forest theme: header, full-height map, floating result card, search bar at the bottom. */
+:root {
+  --appbar-h: 72px;
+  --forest-900: #14421f;
+  --forest-700: #1f5c33;
+  --forest-600: #2f7d4a;
+  --forest-500: #3f9d5a;
+  --forest-100: #e3eedb;
+  --forest-50: #f5f9f2;
+  --muted: #4a6350;
+  --card-bg: rgba(255, 255, 255, 0.97);
+  --card-border: #cfe0c6;
+  --shadow: 0 10px 30px rgba(20, 66, 31, 0.18);
+}
+
+/* Streamlit chrome: no default header or page padding; the app draws its own header. */
+[data-testid="stHeader"] { display: none; }
+[data-testid="stMainBlockContainer"],
+.block-container {
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"] { overflow: hidden; }
+
+/* Header. */
+.st-key-appbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--appbar-h);
+  z-index: 1001;
+  padding: 0 1.25rem;
+  justify-content: space-between;
+  flex-wrap: nowrap !important;
+  background: linear-gradient(90deg, var(--forest-700), var(--forest-600));
+  box-shadow: 0 2px 12px rgba(20, 66, 31, 0.25);
+}
+.brand { display: flex; align-items: center; gap: 0.75rem; color: #fff; min-width: 0; }
+.brand .logo { width: 44px; height: 44px; flex: none; }
+.brand h1 {
+  margin: 0;
+  padding: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.brand p { margin: 0; font-size: 0.85rem; color: #e3eedb; white-space: nowrap; }
+.st-key-appbar [data-testid="stPopover"] button {
+  background: #fff;
+  color: var(--forest-700);
+  border: 0;
+  border-radius: 10px;
+  font-weight: 600;
+  min-height: 44px;
+}
+.st-key-appbar [data-testid="stPopover"] button:hover { background: var(--forest-100); }
+.st-key-appbar [data-testid="stPopover"] button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* Map fills everything below the header. */
+.st-key-map {
+  position: fixed;
+  top: var(--appbar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+.st-key-map iframe {
+  width: 100% !important;
+  height: calc(100vh - var(--appbar-h)) !important;
+  height: calc(100dvh - var(--appbar-h)) !important;
+  display: block;
+  border: 0;
+}
+
+/* Floating result card. */
+.st-key-card {
+  position: fixed;
+  top: calc(var(--appbar-h) + 1rem);
+  left: 1rem;
+  z-index: 1000;
+  width: min(380px, calc(100vw - 2rem));
+  max-height: calc(100dvh - var(--appbar-h) - 9rem);
+  overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  gap: 0.75rem;
+}
+.result { display: flex; flex-direction: column; gap: 0.75rem; color: #1e2b21; }
+.result p { margin: 0; }
+.result-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.card-title { margin: 0; padding: 0; font-size: 1.05rem; font-weight: 700; color: var(--forest-900); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--forest-700);
+  background: var(--forest-100);
+  white-space: nowrap;
+}
+.chip-active { color: #fff; background: var(--forest-600); }
+.question {
+  border-left: 4px solid var(--forest-500);
+  background: var(--forest-50);
+  border-radius: 0 10px 10px 0;
+  padding: 0.55rem 0.75rem;
+}
+.question-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--forest-700);
+  margin-bottom: 0.15rem;
+}
+.question p { font-size: 0.95rem; line-height: 1.4; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  background: var(--forest-50);
+  border: 1px solid var(--forest-100);
+  min-width: 0;
+}
+.stat-value { font-size: 1.35rem; font-weight: 700; line-height: 1.15; color: var(--forest-700); }
+.stat-label { font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
+.summary, .hint { font-size: 0.9rem; line-height: 1.45; }
+.hint { color: var(--muted); }
+.meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.meta dt { margin: 0; padding: 0; font-weight: 700; color: var(--forest-900); }
+.meta dd { margin: 0; padding: 0; color: #1e2b21; min-width: 0; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chips .chip { white-space: normal; }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--forest-100);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.legend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+.swatch.hit { background: #3f9d5a; border: 1.5px solid #1f5c33; }
+.swatch.other { background: #c9d3cb; border: 1px solid #6b786e; }
+.st-key-card [data-testid="stExpander"] details { border-color: var(--forest-100); border-radius: 10px; }
+
+/* Search bar pinned to the bottom, floating over the map. */
+[data-testid="stBottom"],
+[data-testid="stBottom"] > div,
+[data-testid="stBottomBlockContainer"] { background: transparent !important; }
+[data-testid="stBottomBlockContainer"] {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1rem 1.25rem !important;
+}
+[data-testid="stChatInput"] {
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border) !important;
+  border-radius: 14px !important;
+  background: #fff;
+}
+
+/* Tablet. */
+@media (max-width: 900px) {
+  .st-key-card { width: min(360px, calc(100vw - 2rem)); }
+}
+
+/* Phone: shorter header, compact card across the top, full-width search bar. */
+@media (max-width: 600px) {
+  :root { --appbar-h: 60px; }
+  .st-key-appbar { padding: 0 0.75rem; }
+  .brand .logo { width: 36px; height: 36px; }
+  .brand h1 { font-size: 1.1rem; }
+  .brand p { display: none; }
+  /* Icon-only button on phones; the label stays available to screen readers. */
+  .st-key-appbar [data-testid="stPopover"] button p {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  .st-key-card {
+    top: calc(var(--appbar-h) + 0.5rem);
+    left: 0.5rem;
+    width: calc(100vw - 1rem);
+    max-height: 34dvh;
+    padding: 0.7rem 0.85rem;
+  }
+  .stat-value { font-size: 1.1rem; }
+  .result { gap: 0.55rem; }
+  [data-testid="stBottomBlockContainer"] { padding: 0 0.5rem 0.75rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Filters popover: compact panel under the header button. */
+[data-testid="stPopoverBody"] {
+  width: min(360px, calc(100vw - 1.5rem)) !important;
+  max-width: min(360px, calc(100vw - 1.5rem)) !important;
+  max-height: calc(100dvh - var(--appbar-h) - 2rem);
+  overflow-y: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+[data-testid="stPopoverBody"] h4 { font-size: 1.05rem; color: var(--forest-900); padding-top: 0; }
+[data-testid="stPopoverBody"] h5 { font-size: 0.9rem; color: var(--forest-900); }
+
+/* Streamlit's own list padding would otherwise indent the Haku/Ehdot labels. */
+.st-key-card dl.meta,
+.st-key-card dl.meta dt,
+.st-key-card dl.meta dd {
+  margin: 0 !important;
+  padding: 0 !important;
+}
